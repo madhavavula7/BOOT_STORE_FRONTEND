@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* If this background color appears, we know the CSS is linked! */
+:root {
+  background-color: #f8fafc;
+}
