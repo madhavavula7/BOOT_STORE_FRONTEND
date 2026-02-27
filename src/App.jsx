@@ -6,6 +6,7 @@ import Cart from './pages/user/Cart';
 import MyOrders from './pages/user/MyOrders';
 import { Toaster } from 'react-hot-toast';
 import Register from './pages/auth/Register';
+import InvoicePage from './pages/user/InvoicePage';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             {/* Catch-all for undefined routes */}
             <Route path="*" element={<Navigate to="/catalog" />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/invoice/:id" element={<InvoicePage />} />
           </Routes>
         </main>
       </div>
