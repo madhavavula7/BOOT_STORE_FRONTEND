@@ -59,8 +59,8 @@ const InvoicePage = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] py-12 px-4 print:bg-white print:py-0 font-sans">
-            {/* ACTION HEADER */}
-            <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
+            {/* ACTION HEADER - Updated to 80% */}
+            <div className="max-w-[80%] mx-auto mb-6 flex justify-between items-center print:hidden">
                 <button onClick={() => navigate('/my-orders')} className="flex items-center gap-2 text-gray-400 hover:text-black transition-all font-black text-[10px] uppercase tracking-widest">
                     <ArrowLeft size={14}/> Back to History
                 </button>
@@ -71,7 +71,8 @@ const InvoicePage = () => {
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-2xl overflow-hidden border border-gray-100 print:shadow-none print:border-none relative">
+            {/* MAIN INVOICE CARD - Updated to 80% */}
+            <div className="max-w-[80%] mx-auto bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-2xl overflow-hidden border border-gray-100 print:shadow-none print:border-none relative">
                 
                 {/* DECORATIVE ACCENT */}
                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] print:hidden">
@@ -123,7 +124,7 @@ const InvoicePage = () => {
                             </div>
                             <p className="text-sm font-black text-gray-900 mb-1 uppercase tracking-tight">{order.customer}</p>
                             <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                                {order.shippingAddress || null}
+                                {order.shippingAddress || "N/A"}
                             </p>
                             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-gray-400">
                                 <Truck size={12}/> Standard Delivery
@@ -137,7 +138,7 @@ const InvoicePage = () => {
                             </div>
                             <p className="text-sm font-black text-gray-900 mb-1 uppercase tracking-tight">{order.customer}</p>
                             <p className="text-xs text-gray-600 leading-relaxed font-medium">
-                                {order.billingAddress || order.shippingAddress || null}
+                                {order.billingAddress || order.shippingAddress || "N/A"}
                             </p>
                             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-gray-400">
                                 <Mail size={12}/> {order.email}
@@ -186,7 +187,7 @@ const InvoicePage = () => {
                                 </h4>
                                 <p className="text-[11px] text-blue-800 font-medium leading-relaxed">
                                     Payment processed via <span className="font-bold underline">{order.orderStatus}</span>. 
-                                    Transaction ID: <span className="font-mono">TXN-{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                                    Transaction ID: <span className="font-mono uppercase">TXN-{id.slice(-6)}</span>
                                 </p>
                             </div>
                         </div>
@@ -194,15 +195,15 @@ const InvoicePage = () => {
                         <div className="w-full md:w-80 space-y-3">
                             <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">
                                 <span>Sub-Total</span>
-                                <span className="text-gray-900 font-black">₹{order.netAmount?.toFixed(2)}</span>
+                                <span className="text-gray-900 font-black">₹{order.netAmount?.toFixed(2) || order.totalPrice?.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2">
                                 <span>IGST (18%)</span>
-                                <span className="text-gray-900 font-black">₹{order.taxAmount?.toFixed(2)}</span>
+                                <span className="text-gray-900 font-black">₹{order.taxAmount?.toFixed(2) || "0.00"}</span>
                             </div>
                             <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase tracking-widest px-2 border-b border-gray-100 pb-4">
                                 <span>Shipping</span>
-                                <span className="text-gray-900 font-black">₹{order.shippingCharges?.toFixed(2)}</span>
+                                <span className="text-gray-900 font-black">₹{order.shippingCharges?.toFixed(2) || "0.00"}</span>
                             </div>
                             <div className="flex justify-between items-center px-4 py-5 bg-gray-900 text-white rounded-2xl shadow-xl">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Grand Total</span>
@@ -231,8 +232,8 @@ const InvoicePage = () => {
                 </div>
             </div>
             
-            {/* THANK YOU BOX */}
-            <div className="max-w-4xl mx-auto mt-12 text-center print:hidden">
+            {/* THANK YOU BOX - Updated to 80% */}
+            <div className="max-w-[80%] mx-auto mt-12 text-center print:hidden">
                 <p className="text-gray-400 font-bold text-xs uppercase tracking-widest">Happy Reading!</p>
                 <div className="flex justify-center gap-6 mt-4 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-not-allowed">
                     <Globe size={20}/>

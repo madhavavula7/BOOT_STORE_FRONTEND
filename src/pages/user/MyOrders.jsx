@@ -162,7 +162,7 @@ const MyOrders = () => {
 
     // --- MAIN ORDERS LIST ---
     return (
-        <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="max-w-[80%] mx-auto px-4 py-8">
             <h1 className="text-xl font-black mb-8 text-gray-900 uppercase tracking-tight flex items-center gap-2">
                 <ShoppingBag size={20} className="text-blue-600" /> My Purchases
             </h1>
