@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { register } from '../../api/authService';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -18,26 +18,18 @@ const Register = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:8080/api/auth/register', formData);
+            // Using the service function that points to Render
+            const response = await register(formData);
             
-            // Checking response from backend
-            if (response.data && response.data.includes("Successfully")) {
-                toast.success(response.data);
+            // Check if response contains success keywords from your Spring Boot Service
+            if (response.data) {
+                toast.success("Account created successfully! Please login. 📚");
                 navigate('/login');
             }
         } catch (err) {
-            // Handle different error scenarios
-            if (err.response) {
-                // The server responded with a status code (e.g., 400, 500)
-                const backendMsg = err.response.data?.message || err.response.data;
-                toast.error(backendMsg || "Registration failed");
-            } else if (err.request) {
-                // The request was made but no response was received (Server is DOWN)
-                toast.error("Server is unreachable. Please try again later.");
-            } else {
-                // Something else happened setting up the request
-                toast.error("An unexpected error occurred.");
-            }
+            // Production-ready error handling
+            const backendMsg = err.response?.data?.message || err.response?.data || "Registration failed";
+            toast.error(backendMsg);
         } finally {
             setLoading(false);
         }
@@ -101,7 +93,7 @@ const Register = () => {
                         disabled={loading}
                         className={`w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {loading ? 'CREATING...' : 'CREATE ACCOUNT'}
+                        {loading ? 'WAKING SERVER...' : 'CREATE ACCOUNT'}
                     </button>
                 </form>
 

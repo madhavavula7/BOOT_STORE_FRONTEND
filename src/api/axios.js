@@ -20,19 +20,21 @@
 import axios from 'axios';
 
 const api = axios.create({
-    // Use Render URL if available, otherwise localhost
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+    // Points to your LIVE Render backend
+    baseURL: 'https://book-store-springboot.onrender.com/api', 
+    timeout: 60000, // Important: Gives Render 60 seconds to wake up from sleep
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
-// Request Interceptor: Automatically adds the Bearer token
+// This Interceptor automatically adds the JWT token to your headers
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
-}, (error) => {
-    return Promise.reject(error);
 });
 
 export default api;
