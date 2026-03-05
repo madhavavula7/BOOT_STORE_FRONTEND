@@ -93,7 +93,7 @@ const Register = () => {
                         disabled={loading}
                         className={`w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {loading ? 'WAKING SERVER...' : 'CREATE ACCOUNT'}
+                        {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
                     </button>
                 </form>
 
