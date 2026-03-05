@@ -25,11 +25,12 @@
 
 import api from './axios';
 
+// --- AUTHENTICATION ---
 export const login = async (credentials) => {
     // credentials = { email, password }
     const response = await api.post('/auth/login', credentials);
     
-    // Extract token whether backend returns a String or an Object
+    // Handles if backend returns a raw String or an Object {token: "..."}
     const token = typeof response.data === 'string' 
         ? response.data 
         : (response.data.token || response.data.jwt);
@@ -37,7 +38,6 @@ export const login = async (credentials) => {
     if (token) {
         localStorage.setItem('token', token);
     }
-    
     return response;
 };
 
@@ -49,3 +49,10 @@ export const logout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
 };
+
+// --- BOOKS ---
+export const getAllBooks = () => api.get('/books');
+export const addBook = (bookData) => api.post('/books', bookData);
+
+// --- ORDERS ---
+export const getMyOrders = () => api.get('/orders/my');
