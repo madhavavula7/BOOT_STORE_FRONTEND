@@ -1,30 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../../api/authService';
-import { LogIn, Mail, Lock } from 'lucide-react'; // Added icons for consistent look
+import { LogIn, Mail, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Login = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
+    const [loading, setLoading] = useState(false); // Added loading state
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true); // Disable button immediately
+        
         try {
-            const response = await login(credentials);
+            // authService.login handles the API call and localStorage.setItem automatically
+            await login(credentials);
             
-            // IMPORTANT: Since your backend service returns a plain String (JWT),
-            // response.data IS the token itself.
-            const token = response.data;
-            
-            if (token) {
-                localStorage.setItem('token', token);
-                toast.success("Welcome back! 📚");
-                navigate('/catalog');
-            }
+            toast.success("Welcome back! 📚");
+            navigate('/catalog');
         } catch (err) {
             console.error("Login error:", err);
-            toast.error(err.response?.data?.message || "Invalid email or password");
+            // Handle different types of error responses from backend
+            const errorMsg = err.response?.data?.message || err.response?.data || "Invalid email or password";
+            toast.error(errorMsg);
+        } finally {
+            setLoading(false); // Re-enable button
         }
     };
 
@@ -47,6 +48,7 @@ const Login = () => {
                                 type="email" 
                                 className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition outline-none"
                                 placeholder="Enter your email"
+                                value={credentials.email}
                                 onChange={(e) => setCredentials({...credentials, email: e.target.value})}
                                 required
                             />
@@ -61,14 +63,19 @@ const Login = () => {
                                 type="password" 
                                 className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition outline-none"
                                 placeholder="••••••••"
+                                value={credentials.password}
                                 onChange={(e) => setCredentials({...credentials, password: e.target.value})}
                                 required
                             />
                         </div>
                     </div>
 
-                    <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100">
-                        LOGIN
+                    <button 
+                        type="submit" 
+                        disabled={loading} // Prevent double clicks
+                        className={`w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                        {loading ? 'LOGGING IN...' : 'LOGIN'}
                     </button>
                 </form>
 
