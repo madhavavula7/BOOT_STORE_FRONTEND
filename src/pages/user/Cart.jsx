@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // Added useState
 import { useCart } from '../../context/CartContext';
-import { Trash2, Lock, ShoppingBag, MapPin } from 'lucide-react';
+import { Trash2, Lock, ShoppingBag, MapPin } from 'lucide-react'; // Added MapPin icon
 import { useNavigate } from 'react-router-dom';
-import api from '../../api/axios'; // MODIFIED: Import your custom api instance
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const Cart = () => {
@@ -11,14 +11,12 @@ const Cart = () => {
     const total = cart.reduce((sum, item) => sum + item.price, 0);
     const token = localStorage.getItem('token');
 
-    // --- State for Address ---
+    // --- NEW: State for Address ---
     const [address, setAddress] = useState({
         shippingAddress: '',
         state: '',
         pincode: ''
     });
-
-    const [loading, setLoading] = useState(false); // Added for production UX
 
     const handleInputChange = (e) => {
         setAddress({ ...address, [e.target.name]: e.target.value });
@@ -36,31 +34,29 @@ const Cart = () => {
                 bookId: book.id,
                 quantity: 1 
             })),
+            // --- NEW: Sending address data to backend ---
             shippingAddress: address.shippingAddress,
-            billingAddress: address.shippingAddress, 
+            billingAddress: address.shippingAddress, // Set billing same as shipping
             state: address.state,
             pincode: address.pincode
         };
     
-        setLoading(true); // Disable button while waking Render server
         try {
-            // MODIFIED: Use api.post instead of axios.post
-            // This automatically uses the Render URL and adds the Bearer Token
-            const response = await api.post('/orders', orderRequest);
+            const response = await axios.post('https://book-store-springboot.onrender.com/api/orders', orderRequest, {
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             
-            // Checking for a successful status code (200 or 201)
-            if (response.status === 200 || response.status === 201) {
+            if (response.data.success) {
                 toast.success("Order Placed Successfully! 🚀");
                 clearCart();
                 navigate('/my-orders');
             }
         } catch (err) {
             console.error("Order Error:", err.response?.data);
-            // Modified error handling to be more descriptive for production
-            const errorMsg = err.response?.data?.message || "Checkout failed. Server might be waking up.";
-            toast.error(errorMsg);
-        } finally {
-            setLoading(false);
+            toast.error(err.response?.data?.message || "Checkout failed. Please try again.");
         }
     };
 
@@ -96,7 +92,7 @@ const Cart = () => {
                 ))}
             </div>
 
-            {/* Address Form Section */}
+            {/* --- NEW: Address Form Section --- */}
             <div className="mt-10 bg-gray-50 p-6 rounded-2xl border border-gray-200">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                     <MapPin size={20} className="text-blue-600" /> Delivery Address
@@ -141,10 +137,9 @@ const Cart = () => {
                 {token ? (
                     <button 
                         onClick={handleCheckout} 
-                        disabled={loading}
-                        className={`w-full md:w-auto bg-blue-600 text-white px-12 py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className="w-full md:w-auto bg-blue-600 text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200"
                     >
-                        {loading ? 'PROCESSING...' : 'PLACE ORDER NOW'}
+                        PLACE ORDER NOW
                     </button>
                 ) : (
                     <button onClick={() => navigate('/login')} className="w-full md:w-auto bg-gray-100 text-gray-600 px-10 py-4 rounded-2xl font-bold hover:bg-gray-200 flex items-center gap-2">
