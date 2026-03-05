@@ -10,23 +10,41 @@ const Register = () => {
         email: '',
         password: ''
     });
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+
         try {
             const response = await axios.post('http://localhost:8080/api/auth/register', formData);
             
-            // Since your backend returns a plain String: "User Registered Successfully"
-            if (response.data.includes("Successfully")) {
-                toast.success(response.data); // Shows "User Registered Successfully"
+            // Checking response from backend
+            if (response.data && response.data.includes("Successfully")) {
+                toast.success(response.data);
                 navigate('/login');
             }
         } catch (err) {
-            // Catches the throw new RuntimeException("Email already exists")
-            const errorMsg = err.response?.data?.message || "Registration Failed please try again later";
-            toast.error(errorMsg);
+            // Handle different error scenarios
+            if (err.response) {
+                // The server responded with a status code (e.g., 400, 500)
+                const backendMsg = err.response.data?.message || err.response.data;
+                toast.error(backendMsg || "Registration failed");
+            } else if (err.request) {
+                // The request was made but no response was received (Server is DOWN)
+                toast.error("Server is unreachable. Please try again later.");
+            } else {
+                // Something else happened setting up the request
+                toast.error("An unexpected error occurred.");
+            }
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     return (
@@ -44,9 +62,11 @@ const Register = () => {
                         <User className="absolute left-4 top-4 text-gray-400" size={18} />
                         <input 
                             type="text" 
+                            name="name"
                             className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="Full Name"
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            value={formData.name}
+                            onChange={handleChange}
                             required
                         />
                     </div>
@@ -55,9 +75,11 @@ const Register = () => {
                         <Mail className="absolute left-4 top-4 text-gray-400" size={18} />
                         <input 
                             type="email" 
+                            name="email"
                             className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="Email address"
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            value={formData.email}
+                            onChange={handleChange}
                             required
                         />
                     </div>
@@ -66,15 +88,20 @@ const Register = () => {
                         <Lock className="absolute left-4 top-4 text-gray-400" size={18} />
                         <input 
                             type="password" 
+                            name="password"
                             className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="Password"
-                            onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            value={formData.password}
+                            onChange={handleChange}
                             required
                         />
                     </div>
 
-                    <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100">
-                        CREATE ACCOUNT
+                    <button 
+                        disabled={loading}
+                        className={`w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {loading ? 'CREATING...' : 'CREATE ACCOUNT'}
                     </button>
                 </form>
 
