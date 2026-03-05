@@ -20,7 +20,7 @@ const MyOrders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/orders/my', {
+                const response = await axios.get('https://book-store-springboot.onrender.com/api/orders/my', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setOrders(response.data.data || []);
