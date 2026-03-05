@@ -24,7 +24,7 @@ const Register = () => {
             }
         } catch (err) {
             // Catches the throw new RuntimeException("Email already exists")
-            const errorMsg = err.response?.data?.message || "Email already exists";
+            const errorMsg = err.response?.data?.message || "Registration Failed please try again later";
             toast.error(errorMsg);
         }
     };
