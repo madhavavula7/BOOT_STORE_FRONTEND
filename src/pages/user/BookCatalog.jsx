@@ -3,6 +3,7 @@ import { getAllBooks } from '../../api/bookService';
 import { useCart } from '../../context/CartContext';
 import { ArrowLeft, ShoppingCart, BookOpen, Layers, Check, Search, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 const BookCatalog = () => {
     const [books, setBooks] = useState([]);
@@ -10,7 +11,7 @@ const BookCatalog = () => {
     const [selectedBook, setSelectedBook] = useState(null);
     const [addedId, setAddedId] = useState(null); 
     const [searchTerm, setSearchTerm] = useState(""); 
-    const { addToCart } = useCart();
+    const { addToCart, cart } = useCart();
 
     const shuffleArray = (array) => {
         const shuffled = [...array];
@@ -23,25 +24,18 @@ const BookCatalog = () => {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-
         getAllBooks()
             .then(res => {
                 let finalBooks = res.data;
-
-                // --- SHUFFLE LOGIC FOR LOGGED IN USERS ---
                 if (token) {
                     const sessionBooks = sessionStorage.getItem('shuffled_collection');
-                    
                     if (sessionBooks) {
-                        // Use the shuffle we already created for this session
                         finalBooks = JSON.parse(sessionBooks);
                     } else {
-                        // First time logging in this session? Shuffle and save it.
                         finalBooks = shuffleArray(res.data);
                         sessionStorage.setItem('shuffled_collection', JSON.stringify(finalBooks));
                     }
                 }
-
                 setBooks(finalBooks);
                 setLoading(false);
             })
@@ -52,6 +46,14 @@ const BookCatalog = () => {
     }, []);
 
     const handleAddToCart = (book) => {
+        const cartItem = cart.find(item => item.id === book.id);
+        const currentQtyInCart = cartItem ? cartItem.quantity : 0;
+
+        if (currentQtyInCart >= book.stockQuantity) {
+            toast.error("Cannot add more! Stock limit reached.");
+            return;
+        }
+
         addToCart(book);
         setAddedId(book.id);
         setTimeout(() => setAddedId(null), 1500);
@@ -65,8 +67,11 @@ const BookCatalog = () => {
 
     if (loading) return <div className="flex justify-center items-center min-h-[60vh] text-gray-400 font-bold tracking-widest uppercase">Loading Books...</div>;
 
-    // --- DETAILED VIEW ---
     if (selectedBook) {
+        const cartItem = cart.find(item => item.id === selectedBook.id);
+        const isOutOfStock = selectedBook.stockQuantity <= 0;
+        const isLimitReached = cartItem && cartItem.quantity >= selectedBook.stockQuantity;
+
         return (
             <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-10">
                 <button 
@@ -108,12 +113,17 @@ const BookCatalog = () => {
                                 <p className="text-2xl font-black text-blue-600">₹{selectedBook.price}</p>
                             </div>
                         </div>
+                        
                         <motion.button 
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => handleAddToCart(selectedBook)}
-                            className={`w-full py-4 rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg transition-all duration-300 ${addedId === selectedBook.id ? 'bg-green-600 text-white' : 'bg-black text-white'}`}
+                            whileTap={!(isOutOfStock || isLimitReached) ? { scale: 0.97 } : {}}
+                            onClick={() => !(isOutOfStock || isLimitReached) && handleAddToCart(selectedBook)}
+                            disabled={isOutOfStock || isLimitReached}
+                            className={`w-full py-4 rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg transition-all duration-300 ${
+                                (isOutOfStock || isLimitReached) ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 
+                                addedId === selectedBook.id ? 'bg-green-600 text-white' : 'bg-black text-white'
+                            }`}
                         >
-                            {addedId === selectedBook.id ? <><Check size={18}/> Added</> : <><ShoppingCart size={18}/> Add to Cart</>}
+                            {isOutOfStock ? "Out of Stock" : isLimitReached ? "Limit Reached" : addedId === selectedBook.id ? <><Check size={18}/> Added</> : <><ShoppingCart size={18}/> Add to Cart</>}
                         </motion.button>
                     </div>
                 </div>
@@ -121,12 +131,10 @@ const BookCatalog = () => {
         );
     }
 
-    // --- GRID VIEW ---
     return (
         <div className="max-w-[1400px] mx-auto px-3 md:px-10 py-6 md:py-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <h1 className="text-xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Our Collection</h1>
-                
                 <div className="relative w-full md:w-80">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search size={18} className="text-gray-400" />
@@ -148,33 +156,51 @@ const BookCatalog = () => {
 
             {filteredBooks.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
-                    {filteredBooks.map(book => (
-                        <div 
-                            key={book.id} 
-                            onClick={() => setSelectedBook(book)}
-                            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col group"
-                        >
-                            <div className="relative h-40 sm:h-56 overflow-hidden bg-gray-50">
-                                <img src={book.imageUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            </div>
-                            <div className="p-3 flex flex-col flex-1">
-                                <div className="mb-2">
-                                    <h3 className="font-bold text-gray-900 text-[11px] sm:text-sm leading-tight line-clamp-1">{book.title}</h3>
-                                    <p className="text-gray-400 text-[9px] sm:text-[10px] font-medium mt-1 uppercase tracking-tighter">{book.author}</p>
+                    {filteredBooks.map(book => {
+                        const cartItem = cart.find(item => item.id === book.id);
+                        const isOutOfStock = book.stockQuantity <= 0;
+                        const isLimitReached = cartItem && cartItem.quantity >= book.stockQuantity;
+
+                        return (
+                            <div 
+                                key={book.id} 
+                                onClick={() => setSelectedBook(book)}
+                                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col group"
+                            >
+                                <div className="relative h-40 sm:h-56 overflow-hidden bg-gray-50">
+                                    <img src={book.imageUrl} alt={book.title} className={`w-full h-full object-cover transition-transform duration-500 ${isOutOfStock ? 'grayscale opacity-50' : 'group-hover:scale-105'}`} />
+                                    {isOutOfStock && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="bg-white/90 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase">Sold Out</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex flex-col gap-2 mt-auto">
-                                    <span className="text-sm sm:text-base font-black text-blue-600">₹{book.price}</span>
-                                    <motion.button 
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(book); }}
-                                        className={`w-full py-2 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${addedId === book.id ? 'bg-green-600 text-white' : 'bg-gray-900 text-white'}`}
-                                    >
-                                        {addedId === book.id ? "Added!" : "Add to Cart"}
-                                    </motion.button>
+                                <div className="p-3 flex flex-col flex-1">
+                                    <div className="mb-2">
+                                        <h3 className="font-bold text-gray-900 text-[11px] sm:text-sm leading-tight line-clamp-1">{book.title}</h3>
+                                        <p className="text-gray-400 text-[9px] sm:text-[10px] font-medium mt-1 uppercase tracking-tighter">{book.author}</p>
+                                    </div>
+                                    <div className="flex flex-col gap-2 mt-auto">
+                                        <span className="text-sm sm:text-base font-black text-blue-600">₹{book.price}</span>
+                                        <motion.button 
+                                            whileTap={!(isOutOfStock || isLimitReached) ? { scale: 0.9 } : {}}
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                if(!(isOutOfStock || isLimitReached)) handleAddToCart(book); 
+                                            }}
+                                            disabled={isOutOfStock || isLimitReached}
+                                            className={`w-full py-2 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                                                (isOutOfStock || isLimitReached) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' :
+                                                addedId === book.id ? 'bg-green-600 text-white' : 'bg-gray-900 text-white'
+                                            }`}
+                                        >
+                                            {isOutOfStock ? "Out of Stock" : isLimitReached ? "Limit Reached" : addedId === book.id ? "Added!" : "Add to Cart"}
+                                        </motion.button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="text-center py-20">

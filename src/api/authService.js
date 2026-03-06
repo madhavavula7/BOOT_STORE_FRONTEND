@@ -37,6 +37,9 @@ export const login = async (credentials) => {
     
     if (token) {
         localStorage.setItem('token', token);
+        
+        // --- NEW: Reset the book shuffle for this specific login ---
+        sessionStorage.removeItem('shuffled_collection');
     }
     return response;
 };
@@ -47,6 +50,10 @@ export const register = (userData) => {
 
 export const logout = () => {
     localStorage.removeItem('token');
+    
+    // --- NEW: Clear session storage on logout ---
+    sessionStorage.removeItem('shuffled_collection');
+    
     window.location.href = '/login';
 };
 
