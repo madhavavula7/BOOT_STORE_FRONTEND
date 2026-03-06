@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { getAllBooks } from '../../api/bookService';
 import { useCart } from '../../context/CartContext';
-import { ArrowLeft, ShoppingCart, BookOpen, Hash, Layers, Check, Search, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, ShoppingCart, BookOpen, Layers, Check, Search, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const BookCatalog = () => {
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedBook, setSelectedBook] = useState(null);
     const [addedId, setAddedId] = useState(null); 
-    const [searchTerm, setSearchTerm] = useState(""); // New Search State
+    const [searchTerm, setSearchTerm] = useState(""); 
     const { addToCart } = useCart();
 
     const shuffleArray = (array) => {
@@ -22,10 +22,27 @@ const BookCatalog = () => {
     };
 
     useEffect(() => {
+        const token = localStorage.getItem('token');
+
         getAllBooks()
             .then(res => {
-                const shuffledBooks = shuffleArray(res.data);
-                setBooks(shuffledBooks);
+                let finalBooks = res.data;
+
+                // --- SHUFFLE LOGIC FOR LOGGED IN USERS ---
+                if (token) {
+                    const sessionBooks = sessionStorage.getItem('shuffled_collection');
+                    
+                    if (sessionBooks) {
+                        // Use the shuffle we already created for this session
+                        finalBooks = JSON.parse(sessionBooks);
+                    } else {
+                        // First time logging in this session? Shuffle and save it.
+                        finalBooks = shuffleArray(res.data);
+                        sessionStorage.setItem('shuffled_collection', JSON.stringify(finalBooks));
+                    }
+                }
+
+                setBooks(finalBooks);
                 setLoading(false);
             })
             .catch(err => {
@@ -40,7 +57,6 @@ const BookCatalog = () => {
         setTimeout(() => setAddedId(null), 1500);
     };
 
-    // --- Search Logic ---
     const filteredBooks = books.filter(book => 
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,7 +127,6 @@ const BookCatalog = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <h1 className="text-xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Our Collection</h1>
                 
-                {/* Search Bar */}
                 <div className="relative w-full md:w-80">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search size={18} className="text-gray-400" />
@@ -124,10 +139,7 @@ const BookCatalog = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     {searchTerm && (
-                        <button 
-                            onClick={() => setSearchTerm("")}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
+                        <button onClick={() => setSearchTerm("")} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
                             <X size={16} />
                         </button>
                     )}

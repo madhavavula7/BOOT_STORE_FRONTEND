@@ -1,17 +1,28 @@
-import React, { useState } from 'react'; // Added useState
+import React, { useState } from 'react';
 import { useCart } from '../../context/CartContext';
-import { Trash2, Lock, ShoppingBag, MapPin } from 'lucide-react'; // Added MapPin icon
+import { Trash2, Lock, ShoppingBag, MapPin, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+// Array of all Indian States and Union Territories
+const INDIAN_STATES = [
+    "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", 
+    "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", 
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", 
+    "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", 
+    "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", 
+    "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
+    "Uttarakhand", "West Bengal"
+];
+
 const Cart = () => {
-    const { cart, removeFromCart, clearCart } = useCart();
+    const { cart, removeFromCart, addToCart, clearCart } = useCart();
     const navigate = useNavigate();
-    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const token = localStorage.getItem('token');
 
-    // --- NEW: State for Address ---
     const [address, setAddress] = useState({
         shippingAddress: '',
         state: '',
@@ -19,24 +30,36 @@ const Cart = () => {
     });
 
     const handleInputChange = (e) => {
-        setAddress({ ...address, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        
+        // Custom logic for Pincode: Only numbers and max 6 digits
+        if (name === 'pincode') {
+            const numericValue = value.replace(/\D/g, '').slice(0, 6);
+            setAddress({ ...address, [name]: numericValue });
+        } else {
+            setAddress({ ...address, [name]: value });
+        }
     };
 
     const handleCheckout = async () => {
-        // Validation: Ensure address is filled
         if (!address.shippingAddress || !address.state || !address.pincode) {
             toast.error("Please provide a complete delivery address!");
+            return;
+        }
+
+        // Validation for Pincode length
+        if (address.pincode.length !== 6) {
+            toast.error("Pincode must be 6 digits!");
             return;
         }
 
         const orderRequest = {
             items: cart.map(book => ({
                 bookId: book.id,
-                quantity: 1 
+                quantity: book.quantity 
             })),
-            // --- NEW: Sending address data to backend ---
             shippingAddress: address.shippingAddress,
-            billingAddress: address.shippingAddress, // Set billing same as shipping
+            billingAddress: address.shippingAddress,
             state: address.state,
             pincode: address.pincode
         };
@@ -76,8 +99,8 @@ const Cart = () => {
             </h1>
             
             <div className="space-y-4">
-                {cart.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                {cart.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                         <div className="flex items-center gap-4">
                             <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-xl" />
                             <div>
@@ -85,14 +108,31 @@ const Cart = () => {
                                 <p className="text-blue-600 text-sm font-bold">₹{item.price}</p>
                             </div>
                         </div>
-                        <button onClick={() => removeFromCart(index)} className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition">
-                            <Trash2 size={20} />
-                        </button>
+
+                        <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-xl">
+                            <button 
+                                onClick={() => removeFromCart(item.id)}
+                                className="p-1 hover:bg-gray-200 rounded-md transition"
+                            >
+                                <Minus size={16} />
+                            </button>
+                            <span className="font-bold w-6 text-center">{item.quantity}</span>
+                            <button 
+                                onClick={() => addToCart(item)}
+                                className="p-1 hover:bg-gray-200 rounded-md transition"
+                            >
+                                <Plus size={16} />
+                            </button>
+                        </div>
+
+                        <div className="hidden md:block">
+                            <p className="text-sm text-gray-400">Subtotal</p>
+                            <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                        </div>
                     </div>
                 ))}
             </div>
 
-            {/* --- NEW: Address Form Section --- */}
             <div className="mt-10 bg-gray-50 p-6 rounded-2xl border border-gray-200">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                     <MapPin size={20} className="text-blue-600" /> Delivery Address
@@ -107,18 +147,21 @@ const Cart = () => {
                         value={address.shippingAddress}
                     />
                     <div className="flex gap-4">
-                        <input
-                            type="text"
+                        <select
                             name="state"
-                            placeholder="State"
-                            className="w-1/2 p-3 rounded-xl border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-1/2 p-3 rounded-xl border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                             onChange={handleInputChange}
                             value={address.state}
-                        />
+                        >
+                            <option value="">Select State</option>
+                            {INDIAN_STATES.map(state => (
+                                <option key={state} value={state}>{state}</option>
+                            ))}
+                        </select>
                         <input
                             type="text"
                             name="pincode"
-                            placeholder="Pincode"
+                            placeholder="6-digit Pincode"
                             className="w-1/2 p-3 rounded-xl border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500"
                             onChange={handleInputChange}
                             value={address.pincode}
@@ -131,18 +174,17 @@ const Cart = () => {
                 <div>
                     <p className="text-xs text-gray-400 uppercase font-black tracking-widest">Grand Total</p>
                     <span className="text-3xl font-black text-gray-900">₹{total.toFixed(2)}</span>
-                    <p className="text-xs text-gray-500 italic mt-1">+ GST & Shipping calculated at checkout</p>
                 </div>
 
                 {token ? (
                     <button 
                         onClick={handleCheckout} 
-                        className="w-full md:w-auto bg-blue-600 text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+                        className="w-full md:w-auto bg-blue-600 text-white px-12 py-4 rounded-2xl font-black hover:bg-blue-700 transition"
                     >
                         PLACE ORDER NOW
                     </button>
                 ) : (
-                    <button onClick={() => navigate('/login')} className="w-full md:w-auto bg-gray-100 text-gray-600 px-10 py-4 rounded-2xl font-bold hover:bg-gray-200 flex items-center gap-2">
+                    <button onClick={() => navigate('/login')} className="w-full md:w-auto bg-gray-100 text-gray-600 px-10 py-4 rounded-2xl font-bold">
                         <Lock size={18} /> Login to Checkout
                     </button>
                 )}
