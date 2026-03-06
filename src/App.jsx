@@ -12,8 +12,9 @@ function App() {
   return (
     <Router>
       <Toaster 
-        position="top-center" 
-        reverseOrder={false} 
+        position="top-center"
+        reverseOrder={false}
+        limit={1}
         toastOptions={{
           style: {
             fontSize: '16px', 

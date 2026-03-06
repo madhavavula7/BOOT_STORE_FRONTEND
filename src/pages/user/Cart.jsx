@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Array of all Indian States and Union Territories
 const INDIAN_STATES = [
     "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", 
     "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", 
@@ -17,9 +16,8 @@ const INDIAN_STATES = [
 ];
 
 const Cart = () => {
-    const { cart, removeFromCart, addToCart, clearCart } = useCart();
+    const { cart, removeFromCart, addToCart, clearCart, deleteItem } = useCart();
     const navigate = useNavigate();
-    
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const token = localStorage.getItem('token');
 
@@ -31,8 +29,6 @@ const Cart = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        
-        // Custom logic for Pincode: Only numbers and max 6 digits
         if (name === 'pincode') {
             const numericValue = value.replace(/\D/g, '').slice(0, 6);
             setAddress({ ...address, [name]: numericValue });
@@ -46,8 +42,6 @@ const Cart = () => {
             toast.error("Please provide a complete delivery address!");
             return;
         }
-
-        // Validation for Pincode length
         if (address.pincode.length !== 6) {
             toast.error("Pincode must be 6 digits!");
             return;
@@ -71,7 +65,6 @@ const Cart = () => {
                     'Content-Type': 'application/json'
                 }
             });
-            
             if (response.data.success) {
                 toast.success("Order Placed Successfully! 🚀");
                 clearCart();
@@ -97,40 +90,53 @@ const Cart = () => {
             <h1 className="text-3xl font-black mb-6 text-gray-900 flex items-center gap-2">
                 <ShoppingBag /> Your Cart
             </h1>
-            
             <div className="space-y-4">
-                {cart.map((item) => (
-                    <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                        <div className="flex items-center gap-4">
-                            <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-xl" />
-                            <div>
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-blue-600 text-sm font-bold">₹{item.price}</p>
+                {cart.map((item) => {
+                    const isLimitReached = item.quantity >= item.stockQuantity;
+
+                    return (
+                        <div key={item.id} className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-4">
+                                <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-xl" />
+                                <div>
+                                    <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                    <p className="text-blue-600 text-sm font-bold">₹{item.price}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-xl">
+                                    <button 
+                                        onClick={() => removeFromCart(item.id)}
+                                        className="p-1 hover:bg-gray-200 rounded-md transition"
+                                    >
+                                        <Minus size={16} />
+                                    </button>
+                                    <span className="font-bold w-6 text-center">{item.quantity}</span>
+                                    <button 
+                                        onClick={() => !isLimitReached && addToCart(item)}
+                                        disabled={isLimitReached}
+                                        className={`p-1 rounded-md transition ${isLimitReached ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'}`}
+                                    >
+                                        <Plus size={16} />
+                                    </button>
+                                </div>
+
+                                <div className="hidden md:block text-right min-w-[100px]">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Subtotal</p>
+                                    <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                                </div>
+
+                                <button 
+                                    onClick={() => deleteItem(item.id)}
+                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
                             </div>
                         </div>
-
-                        <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-xl">
-                            <button 
-                                onClick={() => removeFromCart(item.id)}
-                                className="p-1 hover:bg-gray-200 rounded-md transition"
-                            >
-                                <Minus size={16} />
-                            </button>
-                            <span className="font-bold w-6 text-center">{item.quantity}</span>
-                            <button 
-                                onClick={() => addToCart(item)}
-                                className="p-1 hover:bg-gray-200 rounded-md transition"
-                            >
-                                <Plus size={16} />
-                            </button>
-                        </div>
-
-                        <div className="hidden md:block">
-                            <p className="text-sm text-gray-400">Subtotal</p>
-                            <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="mt-10 bg-gray-50 p-6 rounded-2xl border border-gray-200">
@@ -175,7 +181,6 @@ const Cart = () => {
                     <p className="text-xs text-gray-400 uppercase font-black tracking-widest">Grand Total</p>
                     <span className="text-3xl font-black text-gray-900">₹{total.toFixed(2)}</span>
                 </div>
-
                 {token ? (
                     <button 
                         onClick={handleCheckout} 
