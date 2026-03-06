@@ -11,36 +11,35 @@ import InvoicePage from './pages/user/InvoicePage';
 function App() {
   return (
     <Router>
-      {/* This enables the top-right notifications globally */}
-<Toaster 
-  position="top-center" // Changed from top-right to top-center
-  reverseOrder={false} 
-  toastOptions={{
-    // Default styling for all toasts
-    style: {
-      fontSize: '18px', // Bigger font
-      fontWeight: 'bold',
-      borderRadius: '16px',
-      padding: '20px',
-      minWidth: '350px', // Bigger width
-    }
-  }}
-/>
+      <Toaster 
+        position="top-center" 
+        reverseOrder={false} 
+        toastOptions={{
+          style: {
+            fontSize: '16px', 
+            fontWeight: '600',
+            borderRadius: '12px',
+            padding: '16px',
+            width: '90%', // Mobile friendly width
+            maxWidth: '450px', // Desktop constraint
+          }
+        }}
+      />
       
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar /> 
-        <main className="w-full">
+        {/* Added responsive horizontal padding (px-4) and vertical spacing (py-6) */}
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/catalog" element={<BookCatalog />} />
             <Route path="/cart" element={<Cart />} /> 
             <Route path="/my-orders" element={<MyOrders />} /> 
-            
-            <Route path="/" element={<Navigate to="/catalog" />} />
-            {/* Catch-all for undefined routes */}
-            <Route path="*" element={<Navigate to="/catalog" />} />
             <Route path="/register" element={<Register />} />
             <Route path="/invoice/:id" element={<InvoicePage />} />
+            
+            <Route path="/" element={<Navigate to="/catalog" />} />
+            <Route path="*" element={<Navigate to="/catalog" />} />
           </Routes>
         </main>
       </div>

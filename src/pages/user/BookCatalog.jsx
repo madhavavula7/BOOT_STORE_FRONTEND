@@ -1,20 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { getAllBooks } from '../../api/bookService';
 import { useCart } from '../../context/CartContext';
-import { ArrowLeft, ShoppingCart, BookOpen, Hash, Layers, Check } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, BookOpen, Hash, Layers, Check, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const BookCatalog = () => {
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedBook, setSelectedBook] = useState(null);
-    const [addedId, setAddedId] = useState(null); // Track click effect state
+    const [addedId, setAddedId] = useState(null); 
+    const [searchTerm, setSearchTerm] = useState(""); // New Search State
     const { addToCart } = useCart();
+
+    const shuffleArray = (array) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    };
 
     useEffect(() => {
         getAllBooks()
             .then(res => {
-                setBooks(res.data);
+                const shuffledBooks = shuffleArray(res.data);
+                setBooks(shuffledBooks);
                 setLoading(false);
             })
             .catch(err => {
@@ -23,114 +34,70 @@ const BookCatalog = () => {
             });
     }, []);
 
-    // Function to handle the click animation logic
     const handleAddToCart = (book) => {
         addToCart(book);
         setAddedId(book.id);
-        // Reset button state after 1.5 seconds
         setTimeout(() => setAddedId(null), 1500);
     };
 
-    if (loading) return <div className="text-center mt-10 text-xl font-semibold text-gray-400 uppercase tracking-widest">Loading Books...</div>;
+    // --- Search Logic ---
+    const filteredBooks = books.filter(book => 
+        book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book.genre.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) return <div className="flex justify-center items-center min-h-[60vh] text-gray-400 font-bold tracking-widest uppercase">Loading Books...</div>;
 
     // --- DETAILED VIEW ---
     if (selectedBook) {
         return (
-            <div className="max-w-6xl mx-auto px-6 py-10">
+            <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-10">
                 <button 
                     onClick={() => setSelectedBook(null)}
-                    className="flex items-center gap-2 text-gray-500 hover:text-black mb-8 font-bold text-xs uppercase transition tracking-widest"
+                    className="flex items-center gap-2 text-gray-500 hover:text-black mb-6 font-bold text-[10px] md:text-xs uppercase tracking-widest transition"
                 >
                     <ArrowLeft size={14} strokeWidth={3} /> Back to Collection
                 </button>
 
-                <div className="bg-white rounded-[32px] shadow-2xl shadow-gray-200/50 overflow-hidden border border-gray-100 flex flex-col md:flex-row">
-                    {/* Left Side: Image */}
-                    <div className="md:w-1/2 bg-gray-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-[24px] md:rounded-[32px] shadow-2xl overflow-hidden border border-gray-100 flex flex-col md:flex-row">
+                    <div className="w-full md:w-1/2 bg-gray-50 flex items-center justify-center p-6 md:p-12">
                         <img 
                             src={selectedBook.imageUrl || 'https://via.placeholder.com/150'} 
                             alt={selectedBook.title} 
-                            className="w-full max-h-[600px] object-contain rounded-xl shadow-lg"
+                            className="w-full max-h-[350px] md:max-h-[600px] object-contain rounded-xl shadow-lg"
                         />
                     </div>
-
-                    {/* Right Side: Details */}
-                    <div className="md:w-1/2 p-12 flex flex-col">
+                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col">
                         <div className="mb-6">
-                            <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] mb-3 block">Book Details</span>
-                            <h1 className="text-4xl font-black text-gray-900 mb-2 leading-tight">{selectedBook.title}</h1>
-                            <p className="text-xl text-gray-400 font-medium italic">by {selectedBook.author}</p>
+                            <span className="text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] mb-2 block">Book Details</span>
+                            <h1 className="text-2xl md:text-4xl font-black text-gray-900 mb-2 leading-tight">{selectedBook.title}</h1>
+                            <p className="text-lg md:text-xl text-gray-400 font-medium italic">by {selectedBook.author}</p>
                         </div>
-
-                        {/* Description */}
-                        <div className="mb-8">
-                            <h4 className="text-gray-900 font-bold text-sm uppercase mb-2">Description</h4>
-                            <p className="text-gray-600 leading-relaxed text-base">
-                                {selectedBook.description || "No description available for this title."}
-                            </p>
+                        <div className="mb-6">
+                            <h4 className="text-gray-900 font-bold text-xs uppercase mb-2">Description</h4>
+                            <p className="text-gray-600 leading-relaxed text-sm md:text-base">{selectedBook.description}</p>
                         </div>
-                        
-                        {/* Specifications Grid */}
-                        <div className="grid grid-cols-2 gap-6 mb-10 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm text-blue-600"><Layers size={18}/></div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Genre</p>
-                                    <p className="text-sm font-bold text-gray-800">{selectedBook.genre || 'N/A'}</p>
-                                </div>
+                        <div className="grid grid-cols-2 gap-3 md:gap-6 mb-8 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                            <div className="flex items-center gap-2">
+                                <Layers size={16} className="text-blue-600" />
+                                <div><p className="text-[9px] font-bold text-gray-400">Genre</p><p className="text-xs font-bold text-gray-800">{selectedBook.genre}</p></div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm text-blue-600"><Hash size={18}/></div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">ISBN</p>
-                                    <p className="text-sm font-bold text-gray-800">{selectedBook.isbn || 'N/A'}</p>
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <BookOpen size={16} className="text-blue-600" />
+                                <div><p className="text-[9px] font-bold text-gray-400">Stock</p><p className="text-xs font-bold text-gray-800">{selectedBook.stockQuantity}</p></div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm text-blue-600"><BookOpen size={18}/></div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Stock</p>
-                                    <p className="text-sm font-bold text-gray-800">{selectedBook.stockQuantity} available</p>
-                                </div>
-                            </div>
-                            <div>
+                            <div className="col-span-2 pt-2 border-t border-gray-200 mt-1">
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">Price</p>
                                 <p className="text-2xl font-black text-blue-600">₹{selectedBook.price}</p>
                             </div>
                         </div>
-
-                        {/* Click Effect Button (Detailed View) */}
                         <motion.button 
                             whileTap={{ scale: 0.97 }}
                             onClick={() => handleAddToCart(selectedBook)}
-                            className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
-                                addedId === selectedBook.id 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-black text-white hover:bg-gray-800'
-                            }`}
+                            className={`w-full py-4 rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg transition-all duration-300 ${addedId === selectedBook.id ? 'bg-green-600 text-white' : 'bg-black text-white'}`}
                         >
-                            <AnimatePresence mode="wait">
-                                {addedId === selectedBook.id ? (
-                                    <motion.span 
-                                        key="added"
-                                        initial={{ opacity: 0, y: 5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -5 }}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Check size={20} strokeWidth={3} /> Added to Cart
-                                    </motion.span>
-                                ) : (
-                                    <motion.span 
-                                        key="add"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="flex items-center gap-2"
-                                    >
-                                        <ShoppingCart size={20} /> Add to Cart
-                                    </motion.span>
-                                )}
-                            </AnimatePresence>
+                            {addedId === selectedBook.id ? <><Check size={18}/> Added</> : <><ShoppingCart size={18}/> Add to Cart</>}
                         </motion.button>
                     </div>
                 </div>
@@ -140,52 +107,69 @@ const BookCatalog = () => {
 
     // --- GRID VIEW ---
     return (
-        <div className="max-w-[1400px] mx-auto px-4 py-10">
-            <h1 className="text-2xl font-black mb-8 text-gray-900 uppercase tracking-tight">Our Collection</h1>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {books.map(book => (
-                    <div 
-                        key={book.id} 
-                        onClick={() => setSelectedBook(book)}
-                        className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col group"
-                    >
-                        <div className="relative h-48 overflow-hidden bg-gray-50">
-                            <img 
-                                src={book.imageUrl || 'https://via.placeholder.com/150'} 
-                                alt={book.title} 
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                        </div>
-
-                        <div className="p-3 flex flex-col flex-1">
-                            <div className="mb-2">
-                                <h3 className="font-bold text-gray-900 text-[11px] leading-tight line-clamp-1">{book.title}</h3>
-                                <p className="text-gray-400 text-[10px] font-medium mt-1 uppercase tracking-tighter">{book.author}</p>
-                            </div>
-
-                            <div className="flex flex-col gap-2 mt-auto">
-                                <span className="text-sm font-black text-blue-600">₹{book.price}</span>
-                                
-                                {/* Click Effect Button (Grid View) */}
-                                <motion.button 
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAddToCart(book);
-                                    }}
-                                    className={`w-full py-1.5 rounded-md text-[10px] font-bold uppercase tracking-tighter transition-all duration-300 ${
-                                        addedId === book.id 
-                                        ? 'bg-green-600 text-white' 
-                                        : 'bg-black text-white hover:bg-gray-800'
-                                    }`}
-                                >
-                                    {addedId === book.id ? "Added!" : "Add to Cart"}
-                                </motion.button>
-                            </div>
-                        </div>
+        <div className="max-w-[1400px] mx-auto px-3 md:px-10 py-6 md:py-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <h1 className="text-xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Our Collection</h1>
+                
+                {/* Search Bar */}
+                <div className="relative w-full md:w-80">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search size={18} className="text-gray-400" />
                     </div>
-                ))}
+                    <input 
+                        type="text"
+                        placeholder="Search by title, author, or genre..."
+                        className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    {searchTerm && (
+                        <button 
+                            onClick={() => setSearchTerm("")}
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {filteredBooks.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+                    {filteredBooks.map(book => (
+                        <div 
+                            key={book.id} 
+                            onClick={() => setSelectedBook(book)}
+                            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all cursor-pointer flex flex-col group"
+                        >
+                            <div className="relative h-40 sm:h-56 overflow-hidden bg-gray-50">
+                                <img src={book.imageUrl} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            </div>
+                            <div className="p-3 flex flex-col flex-1">
+                                <div className="mb-2">
+                                    <h3 className="font-bold text-gray-900 text-[11px] sm:text-sm leading-tight line-clamp-1">{book.title}</h3>
+                                    <p className="text-gray-400 text-[9px] sm:text-[10px] font-medium mt-1 uppercase tracking-tighter">{book.author}</p>
+                                </div>
+                                <div className="flex flex-col gap-2 mt-auto">
+                                    <span className="text-sm sm:text-base font-black text-blue-600">₹{book.price}</span>
+                                    <motion.button 
+                                        whileTap={{ scale: 0.9 }}
+                                        onClick={(e) => { e.stopPropagation(); handleAddToCart(book); }}
+                                        className={`w-full py-2 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${addedId === book.id ? 'bg-green-600 text-white' : 'bg-gray-900 text-white'}`}
+                                    >
+                                        {addedId === book.id ? "Added!" : "Add to Cart"}
+                                    </motion.button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-20">
+                    <p className="text-gray-400 font-bold uppercase tracking-widest">No books found matching "{searchTerm}"</p>
+                    <button onClick={() => setSearchTerm("")} className="mt-4 text-blue-600 font-bold text-sm underline">Clear search</button>
+                </div>
+            )}
         </div>
     );
 };
