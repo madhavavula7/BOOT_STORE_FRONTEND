@@ -89,7 +89,6 @@ const Cart = () => {
         }
     };
 
-    // FIXED: Removed <motion.div> to prevent blank screen crash
     if (isOrdered) return (
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-10 text-center animate-in fade-in duration-700">
             <div className="bg-green-50 p-6 rounded-full mb-6">
@@ -200,22 +199,31 @@ const Cart = () => {
                             </div>
                         </div>
 
-                        <button 
-                            disabled={loading}
-                            onClick={handleCheckout} 
-                            className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
-                                loading 
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100 active:scale-95'
-                            }`}
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="animate-spin" size={18} />
-                                    Processing...
-                                </>
-                            ) : 'Complete Purchase'}
-                        </button>
+                        {token ? (
+                            <button 
+                                disabled={loading}
+                                onClick={handleCheckout} 
+                                className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-xl flex items-center justify-center gap-2 ${
+                                    loading 
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100 active:scale-95'
+                                }`}
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={18} />
+                                        Processing...
+                                    </>
+                                ) : 'Complete Purchase'}
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={() => navigate('/login')}
+                                className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center gap-2"
+                            >
+                                <Lock size={18} /> Login to Purchase
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
