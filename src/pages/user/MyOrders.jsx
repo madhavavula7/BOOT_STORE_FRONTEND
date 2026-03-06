@@ -1,52 +1,54 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { Package, Calendar, ShoppingBag, Receipt, ChevronRight, ArrowLeft, Layers, Hash, BookOpen, Check, ShoppingCart } from 'lucide-react';
+import { Package, Calendar, ShoppingBag, Receipt, ChevronRight, ArrowLeft, Layers, Hash, BookOpen, Check, ShoppingCart, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { useCart } from '../../context/CartContext'; // Ensure this path is correct
+import { useCart } from '../../context/CartContext';
 
 const MyOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedBook, setSelectedBook] = useState(null); // Local state for Detailed View
+    const [selectedBook, setSelectedBook] = useState(null); 
     const [addedId, setAddedId] = useState(null); 
     const { addToCart } = useCart();
-    
-    const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
-    // Fetch user orders
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const response = await axios.get('https://book-store-springboot.onrender.com/api/orders/my', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                setOrders(response.data.data || []);
-            } catch (err) {
-                toast.error("Failed to load orders");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchOrders();
-    }, [token]);
-
-    // Smooth scroll to top when a book is selected
-    useEffect(() => {
-        if (selectedBook) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    const fetchOrders = useCallback(async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setLoading(false);
+            return;
         }
-    }, [selectedBook]);
+
+        try {
+            setLoading(true);
+            const response = await axios.get('https://book-store-springboot.onrender.com/api/orders/my', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.data && response.data.success) {
+                setOrders(response.data.data);
+            }
+        } catch (err) {
+            console.error("Fetch error:", err);
+            toast.error("Unable to reach the server. It might be waking up.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
 
     const handleAddToCart = (book) => {
         const catalogBook = {
-            id: book.bookId,
+            id: book.bookId, 
             title: book.title,
             price: book.price,
             imageUrl: book.imageUrl,
-            author: book.author || 'Lokesh'
+            author: book.author
         };
         addToCart(catalogBook);
         setAddedId(book.bookId);
@@ -54,173 +56,145 @@ const MyOrders = () => {
     };
 
     if (loading) return (
-        <div className="p-10 text-center font-bold text-gray-400 uppercase text-xs tracking-widest animate-pulse">
-            Loading your orders...
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 gap-4 text-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Loading Your Library...</p>
         </div>
     );
 
-    // --- DETAILED VIEW (Matches your design screenshots) ---
+    // --- DETAILED VIEW (RESPONSIVE) ---
     if (selectedBook) {
         return (
-            <div className="max-w-7xl mx-auto px-6 py-10">
+            <div className="w-full max-w-7xl mx-auto px-4 py-6 md:py-10">
                 <button 
-                    onClick={() => setSelectedBook(null)}
-                    className="flex items-center gap-2 text-gray-400 hover:text-black mb-8 font-bold text-xs uppercase transition tracking-widest"
+                    onClick={() => setSelectedBook(null)} 
+                    className="flex items-center gap-2 text-gray-400 hover:text-black mb-6 font-black text-[10px] uppercase tracking-widest outline-none"
                 >
                     <ArrowLeft size={14} strokeWidth={3} /> Back to History
                 </button>
-
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-white rounded-[40px] shadow-2xl shadow-gray-200/50 overflow-hidden border border-gray-100 flex flex-col md:flex-row min-h-[600px]"
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col md:flex-row overflow-hidden"
                 >
-                    {/* Left Side: Pinned Image */}
-                    <div className="md:w-[45%] bg-[#fcfcfc] flex items-center justify-center p-8 border-r border-gray-50">
+                    <div className="w-full md:w-5/12 lg:w-1/2 bg-[#fcfcfc] p-6 md:p-8 flex justify-center items-center border-b md:border-b-0 md:border-r border-gray-100">
                         <img 
                             src={selectedBook.imageUrl} 
-                            alt={selectedBook.title} 
-                            className="w-full h-full max-h-[500px] object-contain rounded-2xl drop-shadow-2xl"
+                            className="w-full max-w-[180px] sm:max-w-[250px] md:max-w-[400px] h-auto object-contain drop-shadow-2xl" 
+                            alt={selectedBook.title}
                         />
                     </div>
-
-                    {/* Right Side: Content Details */}
-                    <div className="md:w-[55%] p-10 md:p-16 flex flex-col">
-                        <div className="mb-8">
-                            <span className="text-blue-600 font-black text-[11px] uppercase tracking-[0.25em] mb-4 block">Book Details</span>
-                            <h1 className="text-5xl font-black text-gray-900 mb-2 tracking-tight leading-tight">
-                                {selectedBook.title}
-                            </h1>
-                            <p className="text-2xl text-gray-400 font-medium italic">by {selectedBook.author || 'Lokesh'}</p>
-                        </div>
-
-                        <div className="mb-10">
-                            <h4 className="text-gray-900 font-black text-[12px] uppercase tracking-widest mb-3">Description</h4>
-                            <p className="text-gray-500 leading-relaxed text-lg font-medium max-w-xl">
-                                {selectedBook.description || "A placeholder book for testing your UI."}
-                            </p>
-                        </div>
-                        
-                        {/* Information Grid */}
-                        <div className="grid grid-cols-2 gap-6 mb-12 p-8 bg-[#f8f9fa] rounded-[32px] border border-gray-100">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white rounded-xl shadow-sm text-blue-600 border border-gray-100"><Layers size={22}/></div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Genre</p>
-                                    <p className="text-base font-black text-gray-800">Story</p>
-                                </div>
+                    <div className="w-full md:w-7/12 lg:w-1/2 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-2 leading-tight">
+                            {selectedBook.title}
+                        </h1>
+                        <p className="text-lg sm:text-xl text-gray-400 mb-6 md:mb-8 italic">by {selectedBook.author}</p>
+                        <p className="text-gray-500 mb-6 md:mb-8 leading-relaxed text-sm sm:text-base">
+                            {selectedBook.description}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8 md:mb-10">
+                            <div className="p-3 sm:p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase">Price</p>
+                                <p className="text-xl sm:text-2xl font-black text-blue-600">₹{selectedBook.price}</p>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white rounded-xl shadow-sm text-blue-600 border border-gray-100"><Hash size={22}/></div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">ISBN</p>
-                                    <p className="text-base font-black text-gray-800">00001</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-white rounded-xl shadow-sm text-blue-600 border border-gray-100"><BookOpen size={22}/></div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Stock</p>
-                                    <p className="text-base font-black text-gray-800">Available</p>
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Price</p>
-                                <p className="text-4xl font-black text-blue-600">₹{selectedBook.price}</p>
+                            <div className="p-3 sm:p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase">Genre</p>
+                                <p className="text-xs sm:text-sm font-black text-gray-800 uppercase truncate">{selectedBook.genre}</p>
                             </div>
                         </div>
-
-                        {/* Large "Order Again" Button */}
-                        <div className="mt-auto">
-                            <motion.button 
-                                whileTap={{ scale: 0.97 }}
-                                onClick={() => handleAddToCart(selectedBook)}
-                                className={`w-full py-6 rounded-2xl font-black uppercase tracking-[0.1em] flex items-center justify-center gap-4 transition-all duration-300 shadow-2xl ${
-                                    addedId === selectedBook.bookId 
-                                    ? 'bg-green-600 text-white shadow-green-200' 
-                                    : 'bg-black text-white hover:bg-gray-900 shadow-gray-300'
-                                }`}
-                            >
-                                <AnimatePresence mode="wait">
-                                    {addedId === selectedBook.bookId ? (
-                                        <motion.span key="added" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
-                                            <Check size={24} strokeWidth={3} /> Added to Cart
-                                        </motion.span>
-                                    ) : (
-                                        <motion.span key="add" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">
-                                            <ShoppingCart size={24} strokeWidth={2.5} /> Order Again
-                                        </motion.span>
-                                    )}
-                                </AnimatePresence>
-                            </motion.button>
-                        </div>
+                        <button 
+                            onClick={() => handleAddToCart(selectedBook)} 
+                            className={`w-full py-4 sm:py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg active:scale-95 ${addedId === selectedBook.bookId ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-gray-800'}`}
+                        >
+                            {addedId === selectedBook.bookId ? 'Added to Cart' : 'Order Again'}
+                        </button>
                     </div>
                 </motion.div>
             </div>
         );
     }
 
-    // --- MAIN ORDERS LIST ---
+    // --- LIST VIEW (RESPONSIVE) ---
     return (
-        <div className="max-w-[80%] mx-auto px-4 py-8">
-            <h1 className="text-xl font-black mb-8 text-gray-900 uppercase tracking-tight flex items-center gap-2">
-                <ShoppingBag size={20} className="text-blue-600" /> My Purchases
-            </h1>
-            
-            <div className="space-y-6">
-                {orders.length > 0 ? orders.map((order) => (
-                    <div key={order.orderId} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all">
-                        {/* Header */}
-                        <div className="p-4 flex justify-between items-center bg-gray-50/50 border-b border-gray-100 text-[10px] font-black uppercase text-gray-400">
-                           <div className="flex gap-4">
-                                <span className="text-blue-600 flex items-center gap-1">
-                                    <Package size={14}/> {order.invoiceNumber || `#${order.orderId}`}
-                                </span>
-                                <span className="flex items-center gap-1 text-gray-300">
-                                    <Calendar size={12}/> {new Date(order.orderDate).toLocaleDateString()}
-                                </span>
-                           </div>
-                           <button 
-                                onClick={() => navigate(`/invoice/${order.orderId}`, { state: { orderData: order } })} 
-                                className="text-blue-600 hover:underline"
-                           >
-                                Invoice
-                           </button>
-                        </div>
-
-                        {/* Clickable Items */}
-                        <div className="p-2">
-                            {order.items?.map((item, idx) => (
-                                <div 
-                                    key={idx} 
-                                    onClick={() => setSelectedBook(item)} 
-                                    className="flex items-center gap-4 p-3 hover:bg-gray-50 transition rounded-xl cursor-pointer group"
-                                >
-                                    <img src={item.imageUrl} className="w-10 h-12 object-cover rounded shadow-sm group-hover:scale-105 transition-transform" alt=""/>
-                                    <div className="flex-1">
-                                        <h3 className="font-black text-gray-800 text-sm group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                                        <p className="text-[10px] font-bold text-gray-400">Qty: {item.quantity} • ₹{item.price}</p>
-                                    </div>
-                                    <ChevronRight size={14} className="text-gray-200 group-hover:text-blue-400 transition-colors" />
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-5 py-4 flex justify-between items-center border-t border-gray-50 bg-white">
-                            <span className="text-lg font-black text-blue-600">₹{order.totalPrice?.toFixed(2)}</span>
-                            <span className="text-[9px] font-black text-green-600 uppercase tracking-widest bg-green-50 px-3 py-1 rounded-full border border-green-100">
-                                {order.orderStatus}
-                            </span>
-                        </div>
-                    </div>
-                )) : (
-                    <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-3xl bg-gray-50/30">
-                        <ShoppingBag className="mx-auto text-gray-200 mb-4" size={48} />
-                        <p className="text-gray-400 font-bold">No orders found.</p>
-                    </div>
-                )}
+        <div className="w-full max-w-4xl mx-auto px-4 py-8 md:py-12">
+            <div className="flex justify-between items-center mb-8 md:mb-10">
+                <h1 className="text-xl sm:text-2xl font-black text-gray-900 uppercase tracking-tighter flex items-center gap-3">
+                    <ShoppingBag size={24} className="text-blue-600 hidden sm:block" /> My Purchases
+                </h1>
+                <button 
+                    onClick={fetchOrders} 
+                    className="p-2.5 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Refresh Orders"
+                >
+                    <RefreshCcw size={18} className="text-gray-500"/>
+                </button>
             </div>
+            
+            {orders.length === 0 ? (
+                <div className="text-center py-20 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200">
+                    <p className="text-sm font-black text-gray-400 uppercase tracking-widest">No orders found yet</p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-6 md:gap-8">
+                    {orders.map((order) => (
+                        <div key={order.orderId} className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                            <div className="p-4 sm:p-5 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 border-b border-gray-100">
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-[9px] sm:text-[10px] font-black uppercase text-gray-400">
+                                    <span className="text-blue-600 bg-blue-50 px-2 py-1 rounded-md flex items-center gap-1">
+                                        <Package size={12}/> {order.invoiceNumber}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <Calendar size={12}/> {new Date(order.orderDate).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <button 
+                                    onClick={() => navigate(`/invoice/${order.orderId}`, { state: { orderData: order } })} 
+                                    className="text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50 px-3 py-1 rounded-md transition-colors"
+                                >
+                                    Invoice
+                                </button>
+                            </div>
+                            
+                            <div className="p-2 sm:p-3">
+                                {order.items.map((item, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        onClick={() => setSelectedBook(item)} 
+                                        className="flex items-center gap-4 sm:gap-5 p-3 sm:p-4 hover:bg-gray-50 rounded-[1rem] sm:rounded-[1.5rem] cursor-pointer group transition-all"
+                                    >
+                                        <img 
+                                            src={item.imageUrl} 
+                                            className="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded-lg shadow-md flex-shrink-0" 
+                                            alt=""
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-black text-gray-800 text-xs sm:text-base truncate group-hover:text-blue-600 transition-colors">
+                                                {item.title}
+                                            </h3>
+                                            <p className="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase mt-0.5 sm:mt-1">
+                                                Qty: {item.quantity} • Unit: ₹{item.price}
+                                            </p>
+                                        </div>
+                                        <ChevronRight size={16} className="text-gray-200 group-hover:text-blue-400 transform group-hover:translate-x-1 transition-all" />
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="px-5 sm:px-8 py-4 sm:py-5 border-t border-gray-50 flex justify-between items-center">
+                                <div className="flex flex-col">
+                                    <span className="text-[7px] sm:text-[8px] font-black text-gray-400 uppercase tracking-widest">Total Amount Paid</span>
+                                    <span className="text-lg sm:text-xl font-black text-gray-900">₹{order.totalPrice.toFixed(2)}</span>
+                                </div>
+                                <span className={`text-[8px] sm:text-[9px] font-black uppercase px-3 sm:px-4 py-1.5 rounded-full border ${
+                                    order.orderStatus === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-blue-50 text-blue-600 border-blue-100'
+                                }`}>
+                                    {order.orderStatus}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

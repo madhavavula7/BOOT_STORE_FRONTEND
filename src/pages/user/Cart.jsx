@@ -18,7 +18,8 @@ const INDIAN_STATES = [
 const Cart = () => {
     const { cart, removeFromCart, addToCart, clearCart, deleteItem } = useCart();
     const navigate = useNavigate();
-    const [isOrdered, setIsOrdered] = useState(false); // Success State
+    const [isOrdered, setIsOrdered] = useState(false);
+    const [loading, setLoading] = useState(false);
     
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const gstAmount = subtotal * 0.18;
@@ -59,168 +60,154 @@ const Cart = () => {
             shippingAddress: address.shippingAddress,
             billingAddress: address.shippingAddress,
             state: address.state,
-            pincode: address.pincode
+            pincode: parseInt(address.pincode), // CONVERTED TO NUMBER
+            totalPrice: total,
+            taxAmount: gstAmount,
+            netAmount: subtotal
         };
     
         try {
+            setLoading(true);
             const response = await axios.post('https://book-store-springboot.onrender.com/api/orders', orderRequest, {
                 headers: { 
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
+
             if (response.data.success) {
-                setIsOrdered(true); // Trigger Green Screen
+                setIsOrdered(true);
                 clearCart();
+                toast.success("Order successful!");
             }
         } catch (err) {
-            console.error("Order Error:", err.response?.data);
-            toast.error(err.response?.data?.message || "Checkout failed. Please try again.");
+            console.error("Order Error Details:", err.response?.data);
+            const errorMsg = err.response?.data?.message || "Checkout failed. Check your connection.";
+            toast.error(errorMsg);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // 1. Success Screen View
     if (isOrdered) return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center animate-in fade-in zoom-in duration-500">
-            <div className="relative mb-6">
-                <div className="absolute inset-0 bg-green-100 rounded-full scale-150 animate-ping opacity-20"></div>
-                <CheckCircle2 size={100} className="text-green-500 relative z-10" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-4xl font-black text-gray-900 mb-2">Order Placed!</h1>
-            <p className="text-gray-500 font-medium mb-8 max-w-xs">
-                Your books are being prepared for shipment.
-            </p>
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-10 text-center">
+            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                <CheckCircle2 size={100} className="text-green-500 mb-6" strokeWidth={1.5} />
+            </motion.div>
+            <h1 className="text-4xl font-black text-gray-900 mb-2">Order Confirmed!</h1>
+            <p className="text-gray-500 mb-8">Your literary journey begins soon.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-                <button 
-                    onClick={() => navigate('/my-orders')}
-                    className="flex-1 bg-gray-900 text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-black transition"
-                >
-                    View My Orders <ArrowRight size={18}/>
-                </button>
-                <button 
-                    onClick={() => navigate('/catalog')}
-                    className="flex-1 bg-white border border-gray-200 text-gray-600 px-8 py-4 rounded-2xl font-bold hover:bg-gray-50 transition"
-                >
-                    Keep Shopping
+                <button onClick={() => navigate('/my-orders')} className="flex-1 bg-black text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2">
+                    Order History <ArrowRight size={18}/>
                 </button>
             </div>
         </div>
     );
 
-    // 2. Empty Cart View
     if (cart.length === 0) return (
-        <div className="flex flex-col items-center justify-center h-96">
-            <ShoppingBag size={48} className="text-gray-200 mb-4" />
-            <h2 className="text-xl text-gray-600 font-medium">Your cart is empty</h2>
-            <button onClick={() => navigate('/catalog')} className="mt-4 text-blue-600 font-bold hover:underline">
-                Go to Catalog
-            </button>
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+            <ShoppingBag size={64} className="text-gray-100 mb-4" />
+            <h2 className="text-xl text-gray-400 font-black uppercase tracking-widest">Your cart is empty</h2>
+            <button onClick={() => navigate('/catalog')} className="mt-6 bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">Browse Books</button>
         </div>
     );
 
-    // 3. Main Cart View
     return (
-        <div className="max-w-6xl mx-auto p-6 md:p-10">
-            <h1 className="text-3xl font-black mb-8 text-gray-900 flex items-center gap-3 tracking-tight">
-                <ShoppingBag className="text-blue-600" /> Your Cart
+        <div className="max-w-6xl mx-auto p-4 sm:p-10">
+            <h1 className="text-3xl font-black mb-10 text-gray-900 flex items-center gap-3">
+                <ShoppingBag className="text-blue-600" size={32} /> Checkout
             </h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                {/* Items and Address */}
                 <div className="lg:col-span-2 space-y-8">
+                    {/* Cart Items */}
                     <div className="space-y-4">
                         {cart.map((item) => (
-                            <div key={item.id} className="flex justify-between items-center bg-white p-5 rounded-3xl shadow-sm border border-gray-100 transition hover:border-blue-100">
-                                <div className="flex items-center gap-5">
-                                    <img src={item.imageUrl} alt={item.title} className="w-16 h-20 object-cover rounded-xl shadow-sm" />
+                            <div key={item.id} className="flex items-center justify-between bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <img src={item.imageUrl} className="w-16 h-20 object-cover rounded-xl shadow-md" alt="" />
                                     <div>
-                                        <h3 className="font-bold text-gray-800 text-lg leading-tight">{item.title}</h3>
+                                        <h3 className="font-black text-gray-800 text-base">{item.title}</h3>
                                         <p className="text-blue-600 font-bold">₹{item.price}</p>
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-6">
-                                    <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-100">
-                                        <button onClick={() => removeFromCart(item.id)} className="p-1 hover:bg-gray-200 rounded-lg transition"><Minus size={16}/></button>
-                                        <span className="font-black w-6 text-center">{item.quantity}</span>
-                                        <button onClick={() => item.quantity < item.stockQuantity && addToCart(item)} className="p-1 hover:bg-gray-200 rounded-lg transition"><Plus size={16}/></button>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border">
+                                        <button onClick={() => removeFromCart(item.id)} className="text-gray-400"><Minus size={14}/></button>
+                                        <span className="font-black text-sm">{item.quantity}</span>
+                                        <button onClick={() => addToCart(item)} className="text-gray-400"><Plus size={14}/></button>
                                     </div>
-                                    <button onClick={() => deleteItem(item.id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={20}/></button>
+                                    <button onClick={() => deleteItem(item.id)} className="text-gray-200 hover:text-red-500 transition-colors"><Trash2 size={20}/></button>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100">
-                        <h2 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                            <MapPin size={18} className="text-blue-600" /> Shipping Address
+                    {/* Address Form */}
+                    <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                        <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <MapPin size={18} className="text-blue-600" /> Delivery Information
                         </h2>
                         <div className="space-y-4">
                             <textarea
                                 name="shippingAddress"
-                                placeholder="Full Address (House No, Street, Landmark)"
-                                className="w-full p-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-50 outline-none transition bg-white"
+                                placeholder="Full Delivery Address"
+                                className="w-full p-5 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-blue-50 outline-none transition"
                                 rows="3"
-                                onChange={handleInputChange}
                                 value={address.shippingAddress}
+                                onChange={handleInputChange}
                             />
-                            <div className="flex gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <select
                                     name="state"
-                                    className="w-1/2 p-4 rounded-2xl border border-gray-200 outline-none focus:ring-4 focus:ring-blue-50 bg-white font-medium"
-                                    onChange={handleInputChange}
+                                    className="p-5 rounded-2xl border border-gray-200 outline-none bg-white font-bold text-gray-700"
                                     value={address.state}
+                                    onChange={handleInputChange}
                                 >
                                     <option value="">Select State</option>
-                                    {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                                    {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                                 <input
                                     type="text"
                                     name="pincode"
-                                    placeholder="6-digit Pincode"
-                                    className="w-1/2 p-4 rounded-2xl border border-gray-200 outline-none focus:ring-4 focus:ring-blue-50 bg-white font-medium"
-                                    onChange={handleInputChange}
+                                    placeholder="Pincode (6 digits)"
+                                    className="p-5 rounded-2xl border border-gray-200 outline-none bg-white font-bold"
                                     value={address.pincode}
+                                    onChange={handleInputChange}
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Summary Section */}
+                {/* Summary */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-100 sticky top-10">
-                        <h2 className="text-xl font-black text-gray-900 mb-6 tracking-tight">Summary</h2>
-                        
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-100 sticky top-10">
+                        <h2 className="text-xl font-black mb-6">Order Summary</h2>
                         <div className="space-y-4 mb-8">
-                            <div className="flex justify-between text-gray-500 font-bold text-sm uppercase tracking-widest">
-                                <span>Subtotal</span>
+                            <div className="flex justify-between text-xs font-black text-gray-400 uppercase tracking-widest">
+                                <span>Items Total</span>
                                 <span className="text-gray-900">₹{subtotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between text-gray-500 font-bold text-sm uppercase tracking-widest">
-                                <span>GST (18%)</span>
+                            <div className="flex justify-between text-xs font-black text-gray-400 uppercase tracking-widest">
+                                <span>Tax (GST 18%)</span>
                                 <span className="text-gray-900">₹{gstAmount.toFixed(2)}</span>
                             </div>
-                            <div className="border-t border-dashed pt-4 mt-4 flex justify-between items-end">
-                                <div>
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Grand Total</p>
-                                    <span className="text-3xl font-black text-gray-900">₹{total.toFixed(2)}</span>
-                                </div>
+                            <div className="pt-6 border-t border-dashed">
+                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Grand Total</p>
+                                <p className="text-4xl font-black text-gray-900">₹{total.toFixed(2)}</p>
                             </div>
                         </div>
 
-                        {token ? (
-                            <button 
-                                onClick={handleCheckout} 
-                                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-700 transition shadow-lg shadow-blue-200 transform active:scale-[0.98]"
-                            >
-                                Place Order Now
-                            </button>
-                        ) : (
-                            <button onClick={() => navigate('/login')} className="w-full bg-gray-100 text-gray-500 py-5 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                                <Lock size={18} /> Login to Checkout
-                            </button>
-                        )}
+                        <button 
+                            disabled={loading}
+                            onClick={handleCheckout} 
+                            className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-xl ${
+                                loading ? 'bg-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-100'
+                            }`}
+                        >
+                            {loading ? 'Processing...' : 'Complete Purchase'}
+                        </button>
                     </div>
                 </div>
             </div>
