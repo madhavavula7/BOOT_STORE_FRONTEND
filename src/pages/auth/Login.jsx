@@ -6,26 +6,27 @@ import toast from 'react-hot-toast';
 
 const Login = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
-    const [loading, setLoading] = useState(false); // Added loading state
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true); // Disable button immediately
+        setLoading(true);
         
         try {
-            // authService.login handles the API call and localStorage.setItem automatically
             await login(credentials);
+            
+            // --- NEW: Clear existing shuffle so Catalog generates a fresh one ---
+            sessionStorage.removeItem('shuffled_collection');
             
             toast.success("Welcome back! 📚");
             navigate('/catalog');
         } catch (err) {
             console.error("Login error:", err);
-            // Handle different types of error responses from backend
             const errorMsg = err.response?.data?.message || err.response?.data || "Invalid email or password";
             toast.error(errorMsg);
         } finally {
-            setLoading(false); // Re-enable button
+            setLoading(false);
         }
     };
 
@@ -72,7 +73,7 @@ const Login = () => {
 
                     <button 
                         type="submit" 
-                        disabled={loading} // Prevent double clicks
+                        disabled={loading}
                         className={`w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition shadow-lg shadow-blue-100 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
                         {loading ? 'LOGGING IN...' : 'LOGIN'}

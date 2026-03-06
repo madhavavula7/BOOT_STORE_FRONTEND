@@ -5,20 +5,36 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
-  // Add book to array
+  // Add book or increase quantity if it exists
   const addToCart = (book) => {
-    setCart((prev) => [...prev, book]);
+    setCart((prev) => {
+      const existingItem = prev.find((item) => item.id === book.id);
+      if (existingItem) {
+        return prev.map((item) =>
+          item.id === book.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { ...book, quantity: 1 }];
+    });
   };
 
-  // Remove one item by its index (so we don't remove all copies of same book)
-  const removeFromCart = (indexToRemove) => {
-    setCart((prev) => prev.filter((_, index) => index !== indexToRemove));
+  // Reduce quantity by 1, or remove if quantity is 1
+  const removeFromCart = (bookId) => {
+    setCart((prev) => {
+      const existingItem = prev.find((item) => item.id === bookId);
+      if (existingItem?.quantity > 1) {
+        return prev.map((item) =>
+          item.id === bookId ? { ...item, quantity: item.quantity - 1 } : item
+        );
+      }
+      return prev.filter((item) => item.id !== bookId);
+    });
   };
 
-  // Empty cart after checkout
   const clearCart = () => setCart([]);
 
-  const cartCount = cart.length;
+  // Calculate total items (sum of all quantities)
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, cartCount }}>
