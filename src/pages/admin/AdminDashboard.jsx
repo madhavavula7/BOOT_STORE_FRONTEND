@@ -79,7 +79,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto text-gray-900 mb-20">
       <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tighter italic">COMMAND CENTER</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tighter italic">Inventory Management</h1>
           <p className="text-gray-500 font-medium mt-1 uppercase text-[10px] tracking-[0.2em]">Live Store Metrics & User Management</p>
         </div>
         <div className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full flex items-center gap-2 self-start md:self-center border border-emerald-200">
