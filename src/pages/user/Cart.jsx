@@ -95,7 +95,7 @@ const Cart = () => {
                 <CheckCircle2 size={100} className="text-green-500" strokeWidth={1.5} />
             </div>
             <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">Order Confirmed!</h1>
-            <p className="text-gray-500 mb-8 font-medium">Your literary journey begins soon. Check your email for details.</p>
+            <p className="text-gray-500 mb-8 font-medium">Your order has been placed successfully. Thank you for shopping with us.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
                 <button onClick={() => navigate('/my-orders')} className="flex-1 bg-black text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition">
                     Order History <ArrowRight size={18}/>
