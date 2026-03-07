@@ -61,3 +61,7 @@ export const addBook = (bookData) => api.post('/books', bookData);
 
 // --- ORDERS ---
 export const getMyOrders = () => api.get('/orders/my');
+
+export const registerAdmin = (adminData) => {
+    return api.post('/auth/register-admin', adminData);
+};

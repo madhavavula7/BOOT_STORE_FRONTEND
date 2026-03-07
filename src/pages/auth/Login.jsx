@@ -57,7 +57,7 @@ const Login = () => {
                     </div>
                     {/* Heading size adjusted for mobile */}
                     <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight text-center">
-                        User Login
+                        Login
                     </h2>
                     <p className="text-gray-400 text-xs sm:text-sm font-medium mt-1">Access your bookstore account</p>
                 </div>
