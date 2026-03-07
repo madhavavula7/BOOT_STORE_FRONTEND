@@ -27,21 +27,21 @@ import api from './axios';
 
 // --- AUTHENTICATION ---
 export const login = async (credentials) => {
-    // credentials = { email, password }
     const response = await api.post('/auth/login', credentials);
     
-    // Handles if backend returns a raw String or an Object {token: "..."}
-    const token = typeof response.data === 'string' 
-        ? response.data 
-        : (response.data.token || response.data.jwt);
-    
-    if (token) {
-        localStorage.setItem('token', token);
+    // We must reach inside: response.data (Axios) -> data (ApiResponse) -> token (AuthResponse)
+    const apiResponse = response.data; 
+
+    if (apiResponse.success && apiResponse.data) {
+        const { token, role } = apiResponse.data;
         
-        // --- NEW: Reset the book shuffle for this specific login ---
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', role); // Save role for navigation logic
+        
         sessionStorage.removeItem('shuffled_collection');
     }
-    return response;
+    
+    return apiResponse; // Return the inner response for the component to use
 };
 
 export const register = (userData) => {
@@ -50,10 +50,8 @@ export const register = (userData) => {
 
 export const logout = () => {
     localStorage.removeItem('token');
-    
-    // --- NEW: Clear session storage on logout ---
+    localStorage.removeItem('role'); // Crucial: clear the role
     sessionStorage.removeItem('shuffled_collection');
-    
     window.location.href = '/login';
 };
 
