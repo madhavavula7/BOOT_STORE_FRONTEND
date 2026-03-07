@@ -44,6 +44,7 @@ const BookCatalog = () => {
                 setLoading(false); 
             });
     }, []);
+    
 
     const handleAddToCart = (book) => {
         const cartItem = cart.find(item => item.id === book.id);

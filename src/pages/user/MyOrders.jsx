@@ -85,10 +85,13 @@ const MyOrders = () => {
                         />
                     </div>
                     <div className="w-full md:w-7/12 lg:w-1/2 p-6 sm:p-8 md:p-12 lg:p-16 flex flex-col">
+                    <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase">Title</p>
                         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-2 leading-tight">
                             {selectedBook.title}
                         </h1>
+                        <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase">author</p>
                         <p className="text-lg sm:text-xl text-gray-400 mb-6 md:mb-8 italic">by {selectedBook.author}</p>
+                        <p className="text-[9px] sm:text-[10px] font-black text-gray-400 uppercase">description</p>
                         <p className="text-gray-500 mb-6 md:mb-8 leading-relaxed text-sm sm:text-base">
                             {selectedBook.description}
                         </p>
