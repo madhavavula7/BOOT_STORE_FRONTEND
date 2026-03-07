@@ -14,13 +14,30 @@ const Login = () => {
         setLoading(true);
         
         try {
-            await login(credentials);
+            // 1. Capture the response from the login call
+            const response = await login(credentials);
+            
+            // 2. Clear the shuffle (as per your requirement)
             sessionStorage.removeItem('shuffled_collection');
-            toast.success("Welcome back! 📚");
-            navigate('/catalog');
+            
+            // 3. Check if login was successful from our ApiResponse wrapper
+            if (response.success) {
+                toast.success(response.message || "Welcome back! 📚");
+    
+                // 4. Get the role we saved in localStorage during the authService.login call
+                const userRole = localStorage.getItem('role');
+    
+                // 5. SMART NAVIGATION: Route based on Role
+                if (userRole === 'ADMIN') {
+                    navigate('/admin-dashboard'); // Send admins to their dashboard
+                } else {
+                    navigate('/catalog'); // Send customers to the catalog (with shuffle reset)
+                }
+            }
         } catch (err) {
             console.error("Login error:", err);
-            const errorMsg = err.response?.data?.message || err.response?.data || "Invalid email or password";
+            // Look for the error message inside our backend wrapper
+            const errorMsg = err.response?.data?.message || "Invalid email or password";
             toast.error(errorMsg);
         } finally {
             setLoading(false);
