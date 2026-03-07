@@ -6,10 +6,14 @@ import Cart from './pages/user/Cart';
 import MyOrders from './pages/user/MyOrders';
 import { Toaster } from 'react-hot-toast';
 import Register from './pages/auth/Register';
+import AdminRegister from './pages/auth/AdminRegister'; // Added this
 import InvoicePage from './pages/user/InvoicePage';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageInventory from './pages/admin/ManageInventory';
+import AdminOrders from './pages/admin/AdminOrders';
+import AddBook from './pages/admin/AddBook';
 
 // --- 1. PROTECTED ROUTE GUARD ---
-// For pages like Catalog, Cart, and Orders
 const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role');
@@ -19,7 +23,6 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   }
 
   if (allowedRole && role !== allowedRole) {
-    // If they are a CUSTOMER trying to see ADMIN pages
     return <Navigate to="/catalog" replace />;
   }
 
@@ -27,13 +30,11 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 };
 
 // --- 2. PUBLIC ROUTE GUARD ---
-// Prevents logged-in users from seeing the Login/Register pages
 const PublicRoute = ({ children }) => {
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role');
 
   if (token) {
-    // If already logged in, send them to their dashboard
     return role === 'ADMIN' ? <Navigate to="/admin-dashboard" replace /> : <Navigate to="/catalog" replace />;
   }
   return children;
@@ -58,7 +59,7 @@ function App() {
         <Navbar /> 
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Routes>
-            {/* Public Routes (Guarded: If logged in, skip these) */}
+            {/* Public Routes */}
             <Route path="/login" element={
               <PublicRoute>
                 <Login />
@@ -69,8 +70,44 @@ function App() {
                 <Register />
               </PublicRoute>
             } />
+            {/* Added Admin Register as a Public Route */}
+            <Route path="/admin-register" element={
+              <PublicRoute> 
+                <AdminRegister />
+              </PublicRoute>
+            } />
 
-            {/* Customer Only Routes (Protected) */}
+            {/* Admin Only Routes */}
+            <Route path="/admin-dashboard" element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/manage-inventory" element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <ManageInventory />
+              </ProtectedRoute>
+            } />
+            <Route 
+              path="/add-book" 
+              element={
+                <ProtectedRoute allowedRole="ADMIN">
+                  <AddBook />
+                </ProtectedRoute>
+              } 
+            />
+
+              <Route 
+                path="/admin-orders" 
+                element={
+                  <ProtectedRoute allowedRole="ADMIN">
+                    <AdminOrders />
+                  </ProtectedRoute>
+                } 
+              />
+
+            {/* Customer Only Routes */}
             <Route path="/catalog" element={
               <ProtectedRoute allowedRole="CUSTOMER">
                 <BookCatalog />
@@ -91,20 +128,14 @@ function App() {
                 <InvoicePage />
               </ProtectedRoute>
             } />
-
-            {/* Admin Only Routes (Protected) */}
-            <Route path="/admin-dashboard" element={
-              <ProtectedRoute allowedRole="ADMIN">
-                <div className="p-10 text-center font-bold bg-white rounded-3xl shadow-sm border border-gray-100">
-                  <h1 className="text-2xl text-blue-600">Admin Panel Access Granted</h1>
-                  <p className="text-gray-500 mt-2">Welcome back, Boss.</p>
-                </div>
-              </ProtectedRoute>
-            } />
             
             {/* Catch-all Redirection */}
-            <Route path="/" element={<Navigate to="/catalog" />} />
-            <Route path="*" element={<Navigate to="/catalog" />} />
+            <Route path="/" element={
+              <Navigate to={localStorage.getItem('role') === 'ADMIN' ? "/admin-dashboard" : "/catalog"} replace />
+            } />
+            <Route path="*" element={
+              <Navigate to={localStorage.getItem('role') === 'ADMIN' ? "/admin-dashboard" : "/catalog"} replace />
+            } />
           </Routes>
         </main>
       </div>
