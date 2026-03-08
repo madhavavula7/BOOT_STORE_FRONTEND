@@ -9,7 +9,6 @@ const AddBook = () => {
     const [loading, setLoading] = useState(false);
     const token = localStorage.getItem('token');
 
-    // These keys match your JSON exactly
     const [bookData, setBookData] = useState({
         title: '',
         author: '',
@@ -23,7 +22,6 @@ const AddBook = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Convert numbers correctly for the backend
         const formattedValue = (name === 'price' || name === 'stockQuantity') ? Number(value) : value;
         setBookData(prev => ({ ...prev, [name]: formattedValue }));
     };
@@ -32,7 +30,6 @@ const AddBook = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            // Path from your BookController: /api/books
             await axios.post('https://book-store-springboot.onrender.com/api/books', bookData, {
                 headers: { Authorization: `Bearer ${token}` }
             });

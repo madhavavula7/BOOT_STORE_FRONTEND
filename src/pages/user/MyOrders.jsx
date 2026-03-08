@@ -62,7 +62,6 @@ const MyOrders = () => {
         </div>
     );
 
-    // --- DETAILED VIEW (RESPONSIVE) ---
     if (selectedBook) {
         return (
             <div className="w-full max-w-7xl mx-auto px-4 py-6 md:py-10">
@@ -117,7 +116,6 @@ const MyOrders = () => {
         );
     }
 
-    // --- LIST VIEW (RESPONSIVE) ---
     return (
         <div className="w-full max-w-4xl mx-auto px-4 py-8 md:py-12">
             <div className="flex justify-between items-center mb-8 md:mb-10">

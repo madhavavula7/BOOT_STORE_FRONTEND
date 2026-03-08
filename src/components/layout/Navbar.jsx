@@ -12,7 +12,6 @@ const Navbar = () => {
   const role = localStorage.getItem('role'); 
   const [isMenuOpen, setIsMenuOpen] = useState(false); 
   
-  // Boolean to determine if we should show Admin styling
   const isAdmin = token && role === 'ADMIN';
 
   let username = "";

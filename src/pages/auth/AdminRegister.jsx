@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Mail, Lock, User, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { registerAdmin } from '../../api/authService'; // Make sure this is in your authService
+import { registerAdmin } from '../../api/authService';
 
 const AdminRegister = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    secretKey: '' // The extra field your backend requires
+    secretKey: '' 
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
