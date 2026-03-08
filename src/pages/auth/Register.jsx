@@ -36,7 +36,6 @@ const Register = () => {
     };
 
     return (
-        // Adjusted padding for mobile/tablet/desktop
         <div className="min-h-[90vh] flex items-center justify-center p-4 sm:p-6 lg:p-8">
             {/* Fluid width with a max-cap to keep it looking clean on desktop */}
             <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 w-full max-w-[440px] border border-gray-100">

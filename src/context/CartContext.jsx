@@ -3,23 +3,19 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  // --- Initialize state from localStorage ---
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('local_cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // --- Save to localStorage whenever the cart changes ---
   useEffect(() => {
     localStorage.setItem('local_cart', JSON.stringify(cart));
   }, [cart]);
 
-  // Add book or increase quantity if it exists
   const addToCart = (book) => {
     setCart((prev) => {
       const existingItem = prev.find((item) => item.id === book.id);
       
-      // Stock protection: prevents adding more than available stock
       if (existingItem && existingItem.quantity >= book.stockQuantity) {
         return prev; 
       }
@@ -33,7 +29,6 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  // Reduce quantity by 1, or remove if quantity is 1
   const removeFromCart = (bookId) => {
     setCart((prev) => {
       const existingItem = prev.find((item) => item.id === bookId);
@@ -46,14 +41,13 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  // --- NEW: Completely remove item regardless of quantity ---
   const deleteItem = (bookId) => {
     setCart((prev) => prev.filter((item) => item.id !== bookId));
   };
 
   const clearCart = () => {
     setCart([]);
-    localStorage.removeItem('local_cart'); // Clean up storage
+    localStorage.removeItem('local_cart');
   };
 
   // Calculate total items (sum of all quantities)

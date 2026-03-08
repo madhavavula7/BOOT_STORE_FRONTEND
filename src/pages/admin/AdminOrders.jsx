@@ -89,7 +89,7 @@ const AdminOrders = () => {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input 
                             type="text" 
-                            placeholder="Search Order ID or Email..." 
+                            placeholder="Search Order ID" 
                             className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-100 shadow-sm focus:ring-4 focus:ring-blue-50 outline-none font-bold"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

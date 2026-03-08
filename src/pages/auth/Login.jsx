@@ -14,29 +14,23 @@ const Login = () => {
         setLoading(true);
         
         try {
-            // 1. Capture the response from the login call
             const response = await login(credentials);
             
-            // 2. Clear the shuffle (as per your requirement)
             sessionStorage.removeItem('shuffled_collection');
             
-            // 3. Check if login was successful from our ApiResponse wrapper
             if (response.success) {
                 toast.success(response.message || "Welcome back! 📚");
     
-                // 4. Get the role we saved in localStorage during the authService.login call
                 const userRole = localStorage.getItem('role');
     
-                // 5. SMART NAVIGATION: Route based on Role
                 if (userRole === 'ADMIN') {
-                    navigate('/admin-dashboard'); // Send admins to their dashboard
+                    navigate('/admin-dashboard');
                 } else {
-                    navigate('/catalog'); // Send customers to the catalog (with shuffle reset)
+                    navigate('/catalog');
                 }
             }
         } catch (err) {
             console.error("Login error:", err);
-            // Look for the error message inside our backend wrapper
             const errorMsg = err.response?.data?.message || "Invalid email or password";
             toast.error(errorMsg);
         } finally {
@@ -45,7 +39,6 @@ const Login = () => {
     };
 
     return (
-        // Changed min-h to screen and adjusted padding for mobile
         <div className="min-h-[90vh] flex items-center justify-center p-4 sm:p-6 lg:p-8">
             {/* Card width is fluid with a max-limit */}
             <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 w-full max-w-[440px] border border-gray-100">
