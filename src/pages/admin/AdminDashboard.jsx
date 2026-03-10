@@ -1,17 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Users, 
-  DollarSign, 
-  PlusCircle, 
-  Trash2, 
-  Loader2, 
-  Edit3, 
-  AlertTriangle,
-  TrendingUp,
-  Package
-} from 'lucide-react';
+import { LayoutDashboard, BookOpen, Users, DollarSign, PlusCircle, Trash2, Loader2, Edit3,  AlertTriangle,TrendingUp,Package} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
